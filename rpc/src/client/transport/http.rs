@@ -125,8 +125,9 @@ impl Builder {
     #[cfg(target_arch = "wasm32")]
     pub fn build(self) -> Result<HttpClient, Error> {
         let builder = reqwest::ClientBuilder::new()
-            .user_agent(USER_AGENT)
-            .timeout(self.timeout);
+            .user_agent(USER_AGENT);
+            // Ignore timeout in wasm (not supported by reqwest)
+            // .timeout(self.timeout);
         let inner = match self.proxy_url {
             None => builder.build().map_err(Error::http)?,
             // Ignore proxy_url in wasm (not supported by reqwest)
