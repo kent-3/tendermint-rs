@@ -3,7 +3,11 @@
 use core::str::FromStr;
 
 use async_trait::async_trait;
-use reqwest::{header, Proxy};
+
+use reqwest::header;
+#[cfg(not(target_arch = "wasm32"))]
+use reqwest::Proxy;
+
 use std::time::Duration;
 
 use tendermint::{block::Height, evidence::Evidence, Hash};
@@ -94,6 +98,7 @@ impl Builder {
     }
 
     /// Try to create a client with the options specified for this builder.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn build(self) -> Result<HttpClient, Error> {
         let builder = reqwest::ClientBuilder::new()
             .user_agent(USER_AGENT)
@@ -107,6 +112,26 @@ impl Builder {
                     Proxy::http(reqwest::Url::from(proxy_url.0)).map_err(Error::invalid_proxy)?
                 };
                 builder.proxy(proxy).build().map_err(Error::http)?
+            },
+        };
+        Ok(HttpClient {
+            inner,
+            url: self.url.into(),
+            compat: self.compat,
+        })
+    }
+    
+    /// Try to create a client with the options specified for this builder.
+    #[cfg(target_arch = "wasm32")]
+    pub fn build(self) -> Result<HttpClient, Error> {
+        let builder = reqwest::ClientBuilder::new()
+            .user_agent(USER_AGENT)
+            .timeout(self.timeout);
+        let inner = match self.proxy_url {
+            None => builder.build().map_err(Error::http)?,
+            // Ignore proxy_url in wasm (not supported by reqwest)
+            Some(proxy_url) => {
+                builder.build().map_err(Error::http)?
             },
         };
         Ok(HttpClient {
