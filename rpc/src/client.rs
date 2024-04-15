@@ -305,6 +305,7 @@ pub trait Client {
             .await
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     #[cfg(any(feature = "http-client", feature = "websocket-client"))]
     /// Poll the `/health` endpoint until it returns a successful result or
     /// the given `timeout` has elapsed.
