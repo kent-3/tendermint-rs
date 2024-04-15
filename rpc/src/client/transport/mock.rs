@@ -61,7 +61,8 @@ pub struct MockClient<M: MockRequestMatcher> {
     driver_tx: ChannelTx<DriverCommand>,
 }
 
-#[async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<M: MockRequestMatcher> Client for MockClient<M> {
     async fn perform<R>(&self, request: R) -> Result<R::Output, Error>
     where
@@ -98,7 +99,8 @@ impl<M: MockRequestMatcher> MockClient<M> {
     }
 }
 
-#[async_trait]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl<M: MockRequestMatcher> SubscriptionClient for MockClient<M> {
     async fn subscribe(&self, query: Query) -> Result<Subscription, Error> {
         let id = uuid_str();
